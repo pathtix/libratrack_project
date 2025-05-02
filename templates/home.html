@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static tailwind_tags %}
+
+{% block title %}Home - Libratrack{% endblock title %}
+
+{% block content %}
+{# UPDATED: Card background (optional, could keep white) #}
+<div class="bg-white p-8 rounded-lg shadow-md">
+
+    {% if user.is_authenticated %}
+        {# Content for logged-in users #}
+        {# UPDATED: Text colors #}
+        <h1 class="text-3xl font-bold text-stone-800 mb-4">Welcome back, {{ user.username }}!</h1>
+
+        {# Section for recently added books #}
+        <h2 class="text-2xl font-semibold text-stone-700 mb-4 border-b border-stone-200 pb-2">Recently Added Books</h2>
+        {% if recent_books %}
+            <div class="space-y-3">
+                {% for book in recent_books %}
+                 {# UPDATED: List item background, border, text colors #}
+                 <div class="p-3 border border-stone-200 rounded-md bg-stone-50 hover:bg-stone-100 transition duration-150 flex items-center space-x-4">
+                     <div class="flex-shrink-0">
+                         {% if book.cover_image_url %}
+                             <img src="{{ book.cover_image_url }}"
+                                  alt="Cover for {{ book.title }}"
+                                  class="h-16 w-auto object-cover rounded shadow"
+                                  onerror="this.onerror=null; this.src='https://placehold.co/40x60/e2e8f0/94a3b8?text=N/A'; this.alt='Image not found';">
+                         {% else %}
+                             <div class="h-16 w-11 bg-stone-200 rounded flex items-center justify-center text-stone-400 text-xs shadow">
+                                 <span>No<br>Cover</span>
+                             </div>
+                         {% endif %}
+                     </div>
+                     <div class="flex-grow">
+                        <a href="{% url 'book_detail' book.pk %}" class="font-medium text-stone-700 hover:text-stone-900 hover:underline">
+                            {{ book.title }}
+                        </a>
+                         <span class="text-sm text-stone-600">by {{ book.author }}</span>
+                         <p class="text-xs text-stone-500 mt-1">
+                             Added to shelf <a href="{% url 'shelf_detail' book.shelf.pk %}" class="text-stone-500 hover:underline">{{ book.shelf.name }}</a> on {{ book.date_added|date:"M d, Y" }}
+                         </p>
+                     </div>
+                 </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {# UPDATED: Text and link colors #}
+            <p class="text-stone-500 italic">You haven't added any books yet. <a href="{% url 'shelf_list' %}" class="text-stone-600 hover:underline">Go add your first book!</a></p>
+        {% endif %}
+
+        <div class="mt-8">
+             {# UPDATED: Button colors #}
+            <a href="{% url 'shelf_list' %}" class="inline-block bg-stone-600 hover:bg-stone-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Go to My Shelves
+            </a>
+        </div>
+
+    {% else %}
+        {# Content for logged-out users #}
+        {# UPDATED: Text and button colors #}
+        <h1 class="text-3xl font-bold text-stone-800 mb-4">Welcome to Libratrack!</h1>
+        <p class="text-stone-600 mb-6">Your personal space to organize and track your home library.</p>
+        <div class="space-x-4">
+            <a href="{% url 'login' %}" class="inline-block bg-stone-600 hover:bg-stone-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Log In
+            </a>
+            <a href="{% url 'register' %}" class="inline-block bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Register
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock content %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static tailwind_tags %}
+
+{% block title %}{{ book.title }} - Libratrack{% endblock title %}
+
+{% block content %}
+{# Card background, text colors, borders #}
+<div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+    {# Breadcrumb Navigation #}
+    <nav class="mb-4 text-sm text-stone-500" aria-label="Breadcrumb">
+         <ol class="list-none p-0 inline-flex">
+            <li class="flex items-center">
+                <a href="{% url 'home' %}" class="hover:text-stone-700">Home</a>
+                <svg class="fill-current w-3 h-3 mx-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/></svg>
+            </li>
+            <li class="flex items-center">
+                <a href="{% url 'shelf_list' %}" class="hover:text-stone-700">My Shelves</a>
+                <svg class="fill-current w-3 h-3 mx-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/></svg>
+            </li>
+             <li class="flex items-center">
+                <a href="{% url 'shelf_detail' book.shelf.pk %}" class="hover:text-stone-700">{{ book.shelf.name }}</a>
+                <svg class="fill-current w-3 h-3 mx-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/></svg>
+            </li>
+            <li class="flex items-center">
+                <span class="text-stone-700">{{ book.title|truncatechars:30 }}</span> {# Truncate long titles #}
+            </li>
+        </ol>
+    </nav>
+
+    {# REMOVED: Redundant messages include (it's already in base.html) #}
+    {# {% include 'partials/_messages.html' %} #}
+
+    <div class="flex flex-col md:flex-row justify-between md:items-start mb-6 border-b border-stone-200 pb-4">
+         {# Cover Image Section #}
+         <div class="mb-6 md:mb-0 md:mr-8 flex-shrink-0">
+             {% if book.cover_image_url %}
+                 <img src="{{ book.cover_image_url }}" alt="Cover for {{ book.title }}" class="max-w-xs h-auto rounded shadow"
+                      onerror="this.onerror=null; this.src='https://placehold.co/200x300/e2e8f0/94a3b8?text=No+Image';"> {# Placeholder on error #}
+             {% else %}
+                  {# Placeholder if no cover URL is provided #}
+                  <div class="w-48 h-64 bg-stone-200 rounded flex items-center justify-center text-stone-400 shadow"> {# Fixed size placeholder #}
+                       <span>No Cover Image</span>
+                  </div>
+             {% endif %}
+        </div>
+
+        {# Book Details Section #}
+        <div class="flex-grow mb-4 md:mb-0">
+            {# Title and Position #}
+            <div class="flex items-baseline space-x-2">
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800">{{ book.title }}</h1>
+                {% if book.row_number or book.column_number %}
+                    <span class="text-xs text-stone-500 font-normal">(
+                        {% if book.row_number %}Row {{ book.row_number }}{% endif %}
+                        {% if book.row_number and book.column_number %}, {% endif %}
+                        {% if book.column_number %}Col {{ book.column_number }}{% endif %}
+                    )</span>
+                {% endif %}
+            </div>
+            <p class="text-lg text-stone-600 mt-1">by {{ book.author }}</p>
+
+            {# Other book details #}
+            <div class="mt-4 space-y-2 text-sm text-stone-700">
+                <p><strong>Shelf:</strong> <a href="{% url 'shelf_detail' book.shelf.pk %}" class="text-stone-600 hover:underline">{{ book.shelf.name }}</a></p>
+                {% if book.isbn %}
+                    <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+                {% endif %}
+                 {% if book.date_added %}
+                    <p><strong>Date Added:</strong> {{ book.date_added|date:"N j, Y" }}</p>
+                 {% endif %}
+            </div>
+
+             {% if book.description %}
+                <div class="mt-4 border-t border-stone-200 pt-4">
+                    <h2 class="text-lg font-semibold text-stone-700 mb-2">Description</h2>
+                    <p class="text-stone-600 whitespace-pre-wrap">{{ book.description }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Action Buttons Section - UPDATED TO USE ICONS #}
+        <div class="flex-shrink-0 flex flex-col space-y-2 self-start md:ml-4">
+            {# Edit Book Button (Icon) #}
+            <a href="{% url 'book_update' book.pk %}" title="Edit Book"
+               class="w-full inline-flex items-center justify-center p-2 bg-amber-500 hover:bg-amber-600 text-white rounded transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <span class="sr-only">Edit Book</span>
+            </a>
+            {# Delete Book Button (Icon) #}
+            <a href="{% url 'book_delete' book.pk %}" title="Delete Book"
+               class="w-full inline-flex items-center justify-center p-2 bg-red-600 hover:bg-red-700 text-white rounded transition duration-300">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                 </svg>
+                 <span class="sr-only">Delete Book</span>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

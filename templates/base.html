@@ -1,0 +1,161 @@
+{% load static tailwind_tags %}<!DOCTYPE html>
+<html lang="en" class="h-full"> {# Add h-full to html #}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Libratrack{% endblock title %}</title>
+
+    {# Favicon link points to favicon.png #}
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}"> {# Assumes favicon is in static/images/ #}
+
+    {% tailwind_css %}
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    {% block extra_head %}{% endblock extra_head %}
+
+</head>
+{# Body background color and default text #}
+<body class="bg-amber-50 font-sans antialiased text-stone-800 flex flex-col min-h-screen"> {# Use flexbox, set min height #}
+
+    {# Nav background and text color #}
+    <nav class="bg-stone-700 text-stone-100 p-4 shadow-md flex-shrink-0"> {# Prevent nav from shrinking #}
+        <div class="container mx-auto flex flex-wrap justify-between items-center">
+
+            {# Left side: Brand - logo size #}
+            <div class="flex-shrink-0 order-1">
+                 <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                     {# Logo Image #}
+                     <img src="{% static 'images/logo.png' %}" alt="Libratrack Logo" class="h-16 w-auto"> {# Adjust height as needed #}
+                 </a>
+            </div>
+
+
+            {# Center: Search Bar #}
+            {% if user.is_authenticated %}
+            <div class="order-3 md:order-2 w-full md:w-auto mt-4 md:mt-0">
+                <div x-data="{
+                        query: '{{ request.GET.q|escapejs }}',
+                        results: [],
+                        isLoading: false,
+                        showPreview: false,
+                        fetchResults() {
+                            if (this.query.length < 2) {
+                                this.results = [];
+                                this.showPreview = false;
+                                return;
+                            }
+                            this.isLoading = true;
+                            this.showPreview = true;
+                            fetch(`{% url 'live_search_books' %}?q=${encodeURIComponent(this.query)}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    this.results = data.books;
+                                    this.isLoading = false;
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching search results:', error);
+                                    this.isLoading = false;
+                                    this.showPreview = false;
+                                });
+                        }
+                    }"
+                    class="relative w-full md:w-80 lg:w-96 mx-auto"
+                    @click.outside="showPreview = false"
+                >
+                    <form method="GET" action="{% url 'search_results' %}" @submit="showPreview = false">
+                        <input type="search" name="q"
+                               x-model="query"
+                               @input.debounce.500ms="fetchResults"
+                               @focus="if (query.length >= 2) showPreview = true"
+                               @keydown.escape.prevent="showPreview = false; $event.target.blur()"
+                               {# Search input styling #}
+                               class="w-full px-4 py-2 text-sm text-stone-900 bg-stone-50 rounded-lg border border-stone-300 focus:ring-stone-500 focus:border-stone-500"
+                               placeholder="Search Books..."
+                               autocomplete="off"
+                               required>
+                        {# Search button styling #}
+                        <button type="submit" class="absolute top-0 right-0 h-full p-2.5 text-sm font-medium text-white bg-stone-600 rounded-r-lg border border-stone-600 hover:bg-stone-700 focus:ring-4 focus:outline-none focus:ring-stone-300">
+                            <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                            </svg>
+                            <span class="sr-only">Search</span>
+                        </button>
+                    </form>
+
+                    {# Live Search Preview Dropdown #}
+                    <div x-show="showPreview"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         {# Dropdown styling #}
+                         class="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-stone-200 max-h-80 overflow-y-auto"
+                         style="display: none;"
+                         >
+                        <div x-show="isLoading" class="p-4 text-center text-stone-500">Loading...</div>
+                        <ul x-show="!isLoading && results.length > 0" class="divide-y divide-stone-100">
+                            <template x-for="book in results" :key="book.id">
+                                <li class="p-3 hover:bg-stone-50">
+                                    <a :href="`/library/books/${book.id}/`" class="flex items-center space-x-3" @click="showPreview = false">
+                                        <img :src="book.cover_url || 'https://placehold.co/32x48/e2e8f0/94a3b8?text=N/A'"
+                                             alt="Cover" class="h-10 w-auto flex-shrink-0 rounded object-cover">
+                                        <div>
+                                            {# Text colors #}
+                                            <p class="text-sm font-medium text-stone-900" x-text="book.title"></p>
+                                            <p class="text-xs text-stone-500" x-text="`by ${book.author}`"></p>
+                                        </div>
+                                    </a>
+                                </li>
+                            </template>
+                        </ul>
+                        <div x-show="!isLoading && results.length === 0 && query.length >= 2" class="p-4 text-center text-stone-500 text-sm">
+                            No results found for "<span x-text="query"></span>".
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Right side: User links #}
+            <div class="flex-shrink-0 order-2 md:order-3">
+                {% if user.is_authenticated %}
+                    {# UPDATED: My Profile link uses URL name #}
+                    <a href="{% url 'profile' %}" class="px-3 py-2 rounded hover:bg-stone-600 whitespace-nowrap">My Profile</a>
+                    {# Link hover color #}
+                    <a href="{% url 'shelf_list' %}" class="px-3 py-2 rounded hover:bg-stone-600 whitespace-nowrap">My Shelves</a>
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-2 rounded hover:bg-stone-600">Logout</button>
+                    </form>
+                {% else %}
+                    {# Link hover color #}
+                    <a href="{% url 'login' %}" class="px-3 py-2 rounded hover:bg-stone-600">Login</a>
+                    <a href="{% url 'register' %}" class="px-3 py-2 rounded hover:bg-stone-600">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {# Main content area grows to push footer down #}
+    <main class="container mx-auto mt-8 p-4 flex-grow">
+         {# Display messages consistently #}
+        {% include 'partials/_messages.html' %}
+
+        {% block content %}
+            <p>Welcome to Libratrack!</p>
+        {% endblock content %}
+    </main>
+
+    {# Footer background, text, and border color. Removed top margin. Added flex-shrink-0 #}
+    <footer class="bg-stone-700 text-stone-100 text-center text-sm p-4 flex-shrink-0"> {# Use nav color, prevent shrinking #}
+        &copy; {% now "Y" %} Libratrack. All rights reserved.
+    </footer>
+
+    {% block extra_scripts %}{% endblock extra_scripts %}
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% if messages %}
+<div class="space-y-2 mb-4">
+    {% for message in messages %}
+        {# UPDATED: Background, border, and text colors for different message tags #}
+        <div class="p-4 text-sm rounded-lg border
+            {% if message.tags == 'success' %} bg-emerald-50 border-emerald-300 text-emerald-800 {% endif %}
+            {% if message.tags == 'error' %} bg-red-50 border-red-300 text-red-800 {% endif %}
+            {% if message.tags == 'warning' %} bg-amber-50 border-amber-300 text-amber-800 {% endif %}
+            {% if message.tags == 'info' or not message.tags %} bg-stone-50 border-stone-300 text-stone-800 {% endif %}"
+            role="alert">
+            <span class="font-medium">
+                 {% if message.tags == 'success' %}Success!{% endif %}
+                 {% if message.tags == 'error' %}Error!{% endif %}
+                 {% if message.tags == 'warning' %}Warning!{% endif %}
+                 {% if message.tags == 'info' or not message.tags %}Info:{% endif %}
+            </span>
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}

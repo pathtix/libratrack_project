@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static tailwind_tags %}
+
+{% block title %}{% if book %}Update Book{% else %}Add New Book{% endif %} - Libratrack{% endblock title %}
+
+{% block content %}
+{# UPDATED: Card background, text colors, borders #}
+<div class="max-w-2xl mx-auto mt-6 md:mt-10 p-6 md:p-8 bg-white rounded-lg shadow-md">
+
+    <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-6 text-center">
+        {% if book %} {# Check if we are updating an existing book object (passed from UpdateView context) #}
+            Update Book: {{ book.title }}
+        {% else %}
+            Add New Book{% if shelf %} to Shelf "{{ shelf.name }}"{% endif %} {# Display shelf name if creating #}
+        {% endif %}
+    </h1>
+
+    {# UPDATED: Error message colors (using partial now, but keeping this structure for form-specific non-field errors) #}
+    {% if form.non_field_errors %}
+        <div class="mb-4 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">Please correct the errors below.</span>
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" class="space-y-4"> {# No action needed, form submits to current URL #}
+        {% csrf_token %} {# Security token required by Django #}
+
+        {# Render form fields using the widgets defined in BookForm #}
+        {% for field in form %}
+            <div>
+                 {# UPDATED: Label text color #}
+                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-1">{{ field.label }}</label>
+                 {# Field rendering uses classes defined in forms.py widgets #}
+                 {{ field }}
+                 {% if field.help_text %}
+                    {# UPDATED: Help text color #}
+                    <p class="mt-1 text-xs text-stone-500">{{ field.help_text|safe }}</p>
+                 {% endif %}
+                 {% if field.errors %}
+                    {# Error text color remains red #}
+                    <p class="mt-1 text-sm text-red-600">{{ field.errors|striptags }}</p>
+                 {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="flex justify-end space-x-3 pt-4">
+            {# Determine the cancel URL based on context #}
+            {% if book %} {# If updating a book, cancel goes to book detail #}
+                 {# UPDATED: Cancel button colors #}
+                <a href="{% url 'book_detail' book.pk %}" class="inline-block bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold py-2 px-4 rounded transition duration-300">
+                    Cancel
+                </a>
+            {% elif shelf %} {# If creating a book for a specific shelf, cancel goes to shelf detail #}
+                 {# UPDATED: Cancel button colors #}
+                 <a href="{% url 'shelf_detail' shelf.pk %}" class="inline-block bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold py-2 px-4 rounded transition duration-300">
+                    Cancel
+                </a>
+            {% else %} {# Fallback cancel (shouldn't usually happen with current views) #}
+                 {# UPDATED: Cancel button colors #}
+                 <a href="{% url 'home' %}" class="inline-block bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold py-2 px-4 rounded transition duration-300">
+                    Cancel
+                </a>
+            {% endif %}
+
+             {# UPDATED: Submit button colors #}
+            <button type="submit" class="inline-block bg-stone-600 hover:bg-stone-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                {% if book %}Update Book{% else %}Add Book{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock content %}
